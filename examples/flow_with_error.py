@@ -13,7 +13,7 @@ async def my_flow(*args, **kwargs):
 # Always ok to start a new workflow, if there is no other running
 async def ok_to_start(name: str, running: list[str]) -> bool:
     if len(running) > 0:
-        raise ValueError("A workflow is already running")
+        raise ValueError("Another task is already running")
     return True  # Ok to start
 
 
@@ -22,11 +22,11 @@ async def main():
     runner = WorkflowRunner({"my_flow": my_flow}, ok_to_start_cb=ok_to_start)
 
     # Start a workflow
-    identifier = await runner.start_workflow("my_flow", "{}")
+    identifier = await runner.start_task("my_flow", "{}")
     while True:
         # Check the status of the workflow
         await asyncio.sleep(0.5)
-        C = await runner.get_workflow_status(identifier)
+        C = await runner.get_task_status(identifier)
 
         # If the workflow is completed, print the status and break the loop
         if C != "ACTIVE":

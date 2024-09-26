@@ -1,7 +1,7 @@
-from .core.runner import TaskState, WorkflowRunner, WorkflowStatus
+from .core.runner import TaskState, TaskStatus, WorkflowRunner
 
 __all__ = [
     "WorkflowRunner",
     "TaskState",
-    "WorkflowStatus",
+    "TaskStatus",
 ]

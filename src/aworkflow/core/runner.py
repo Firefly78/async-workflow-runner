@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 class TaskState(Enum):
+    """Indicates the state of a task"""
+
     ACTIVE = auto()
     CANCELLING = auto()
     CANCELLED = auto()
@@ -22,7 +24,9 @@ class TaskState(Enum):
 
 
 @dataclass
-class WorkflowStatus:
+class TaskStatus:
+    """State of a workflow execution"""
+
     name: str
     identifier: str
     task: Optional[asyncio.Task]
@@ -38,25 +42,30 @@ class WorkflowRunner:
         self,
         workflows: dict[str, Callable],
         ok_to_start_cb: Callable[[str, list[str]], Coroutine[Any, Any, bool]],
+        task_record_lengt_s: float = 3600 * 24,
     ):
-        self.running_tasks: dict[str, WorkflowStatus] = {}
+        self.running_tasks: dict[str, TaskStatus] = {}
         self.all_workflows = workflows.copy()
         self._ok_to_start_wf = ok_to_start_cb
         self.on_wf_done = Event()
+        self.task_record_lengt_s = task_record_lengt_s
 
-    async def cancel_workflow(self, identifier: str) -> None:
+    async def cancel_task(self, identifier: str) -> None:
+        """Cancel a running task"""
         try:
             task = self.running_tasks[identifier]
         except KeyError:
             raise ValueError("Invalid identifier")
-        logger.info(f"Cancelling: 'Processing {task.name}'")
+        logger.info(f"Cancelling: 'Task {task.name}'")
         task.state = TaskState.CANCELLING
         task.cancel_event.set()
 
-    async def get_running_workflows(self) -> list[WorkflowStatus]:
+    async def get_all_running_tasks(self) -> list[TaskStatus]:
+        """Return all running tasks"""
         return list(self.running_tasks.values())
 
-    async def get_workflow_status(self, identifier: str) -> str:
+    async def get_task_status(self, identifier: str) -> str:
+        """Return the status of a task"""
         if identifier not in self.running_tasks:
             raise ValueError("Invalid identifier")
         wf = self.running_tasks[identifier]
@@ -76,11 +85,17 @@ class WorkflowRunner:
 
         return "ACTIVE"
 
-    async def start_workflow(
+    async def start_task(
         self,
         name: str,
         arguments_json: Union[str, dict],
     ) -> str:
+        """
+        Start a workflow as a task
+
+        :param name: Name of the workflow to run
+        :param arguments_json: JSON string or dictionary with arguments
+        """
 
         # Patch arguments_json
         if isinstance(arguments_json, str):
@@ -94,12 +109,12 @@ class WorkflowRunner:
 
         # Start the workflow
         try:
-            logger.info(f"Starting: 'Processing {name}'")
+            logger.info(f"Attempting to start: 'Task {name}'")
 
             task_uuid = str(uuid.uuid4())
             cancel_event = Event()
 
-            status_obj = WorkflowStatus(
+            status_obj = TaskStatus(
                 state=TaskState.ACTIVE,
                 task=None,
                 name=name,
@@ -123,11 +138,11 @@ class WorkflowRunner:
                     status_obj.state = TaskState.COMPLETED
 
                 # Clean up among tasks (remove old tasks)
-                # Remove tasks > 24 hours old and not active
+                # Remove old and not active tasks
                 t = time()
                 to_be_removed = dict(
                     filter(
-                        lambda x: t - x[1].started_at > 3600 * 24
+                        lambda x: t - x[1].started_at > self.task_record_lengt_s
                         and x[1].state != TaskState.ACTIVE,
                         self.running_tasks.items(),
                     )
@@ -152,6 +167,7 @@ class WorkflowRunner:
 
 
 def parse_json_dict(json_string: str) -> dict:
+    """Parse a JSON string and return the content. Only accepts dictionaries."""
     try:
         json_string = json_string.strip()
         json_string = json_string if json_string else "{}"
