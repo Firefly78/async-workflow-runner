@@ -1,6 +1,6 @@
 import asyncio
 
-from aworkflow import WorkflowRunner
+from aworkflow import WorkflowRunner, TaskState
 
 
 async def my_flow(*args, **kwargs):
@@ -26,11 +26,11 @@ async def main():
     while True:
         # Check the status of the workflow
         await asyncio.sleep(0.5)
-        C = await runner.get_task_status(identifier)
+        C, nfo = await runner.get_task_status(identifier)
 
         # If the workflow is completed, print the status and break the loop
-        if C != "ACTIVE":
-            print(f"Workflow ended with status: {C}")
+        if C != TaskState.ACTIVE:
+            print(f"Workflow ended with status: {C.name}")
             break
 
 

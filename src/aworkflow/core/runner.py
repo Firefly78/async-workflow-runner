@@ -64,26 +64,21 @@ class WorkflowRunner:
         """Return all running tasks"""
         return list(self.running_tasks.values())
 
-    async def get_task_status(self, identifier: str) -> str:
-        """Return the status of a task"""
+    async def get_task_status(self, identifier: str) -> tuple[TaskState, Optional[str]]:
+        """
+        Return the state of a task
+
+        Args:
+            identifier: Identifier of the task
+
+        Returns:
+            Tuple with state and optional additional info (usually an error message)
+        """
         if identifier not in self.running_tasks:
             raise ValueError("Invalid identifier")
         wf = self.running_tasks[identifier]
 
-        if wf.state == TaskState.CANCELLING:
-            return "CANCELLING"
-
-        if wf.state == TaskState.CANCELLED:
-            return "CANCELLED"
-
-        if wf.state == TaskState.COMPLETED:
-            return "COMPLETED"
-
-        if wf.state == TaskState.COMPLETED_WITH_ERROR:
-            nfo = wf.additional_info if wf.additional_info else "Unknown error"
-            return f"COMPLETED_WITH_ERROR : {nfo}"
-
-        return "ACTIVE"
+        return (wf.state, wf.additional_info)
 
     async def start_task(
         self,
