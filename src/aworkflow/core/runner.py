@@ -37,7 +37,6 @@ class TaskStatus:
 
 
 class WorkflowRunner:
-
     def __init__(
         self,
         workflows: dict[str, Callable],
@@ -98,7 +97,12 @@ class WorkflowRunner:
 
         # Check if ok to start
         if not await self._ok_to_start_wf(
-            name, [x.name for x in self.running_tasks.values()]
+            name,
+            [
+                x.name
+                for x in self.running_tasks.values()
+                if x.state == TaskState.ACTIVE
+            ],
         ):
             raise Exception("Not ok to start")
 
