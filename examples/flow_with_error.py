@@ -1,6 +1,6 @@
 import asyncio
 
-from aworkflow import WorkflowRunner, TaskState
+from aworkflow import TaskState, WorkflowRunner
 
 
 async def my_flow(*args, **kwargs):

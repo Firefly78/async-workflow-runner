@@ -37,7 +37,6 @@ class TaskStatus:
 
 
 class WorkflowRunner:
-
     def __init__(
         self,
         workflows: dict[str, Callable],
