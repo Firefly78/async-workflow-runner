@@ -128,7 +128,7 @@ class WorkflowRunner:
                     error = str(error)  # Square hole
 
                 # Report status
-                if error:
+                if error is not None:
                     status_obj.state = TaskState.COMPLETED_WITH_ERROR
                     status_obj.additional_info = error
                 elif cancel_event.is_set():
