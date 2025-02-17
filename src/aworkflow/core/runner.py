@@ -40,7 +40,9 @@ class WorkflowRunner:
     def __init__(
         self,
         workflows: dict[str, Callable],
-        ok_to_start_cb: Callable[[str, list[str]], Coroutine[Any, Any, bool]],
+        ok_to_start_cb: Optional[
+            Callable[[str, list[str]], Coroutine[Any, Any, bool]]
+        ] = None,
         task_record_lengt_s: float = 3600 * 24,
     ):
         self.running_tasks: dict[str, TaskStatus] = {}
@@ -96,7 +98,7 @@ class WorkflowRunner:
             arguments_json = parse_json_dict(arguments_json)
 
         # Check if ok to start
-        if not await self._ok_to_start_wf(
+        if self._ok_to_start_wf and not await self._ok_to_start_wf(
             name,
             [
                 x.name
@@ -123,14 +125,17 @@ class WorkflowRunner:
             )
             self.running_tasks[task_uuid] = status_obj
 
-            def on_exit(error: Optional[str] = None):
-                if error is not None and not isinstance(error, str):
-                    error = str(error)  # Square hole
+            def on_exit(error: Union[Exception, str, None] = None):
+                if error is not None and not isinstance(error, Exception):
+                    try:
+                        error = Exception(str(error))  # Square hole
+                    except Exception:
+                        error = Exception("Unknown error")
 
                 # Report status
-                if error:
+                if error is not None:
                     status_obj.state = TaskState.COMPLETED_WITH_ERROR
-                    status_obj.additional_info = error
+                    status_obj.additional_info = str(error)
                 elif cancel_event.is_set():
                     status_obj.state = TaskState.CANCELLED
                 else:
