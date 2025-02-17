@@ -1,13 +1,13 @@
 import asyncio
 import logging
-from typing import Any, Callable, Coroutine, Optional
+from typing import Any, Callable, Coroutine, Optional, Union
 
 logger = logging.getLogger(__name__)
 
 
 async def run_async(
     process: Callable[[Any], Coroutine[Any, Any, None]],
-    on_exit: Optional[Callable[[Optional[str]], Any]] = None,
+    on_exit: Optional[Callable[[Union[Exception, str, None]], Any]] = None,
     *args,
     **kwargs,
 ) -> None:
@@ -22,12 +22,12 @@ async def run_async(
     except Exception as e:
         logger.error(f"Workflow errored :: {process.__name__}")
         logger.exception(e)
-        return on_exit and on_exit(str(e))
+        return on_exit and on_exit(e)
 
 
 def run_async_in_loop(
     process: Callable[[Any], Coroutine[Any, Any, None]],
-    on_exit: Optional[Callable[[Optional[str]], Any]] = None,
+    on_exit: Optional[Callable[[Union[Exception, str, None]], Any]] = None,
     *args,
     **kwargs,
 ) -> None:
@@ -47,4 +47,4 @@ def run_async_in_loop(
     except Exception as e:
         logger.error(f"Workflow errored :: {process.__name__}")
         logger.exception(e)
-        return on_exit and on_exit(str(e))
+        return on_exit and on_exit(e)
