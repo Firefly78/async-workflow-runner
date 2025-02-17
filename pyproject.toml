@@ -1,6 +1,6 @@
 [project]
 name = "async-workflow-runner"
-version = "0.1.1"
+version = "0.1.2"
 authors = [
   { name="Erik Trygg", email="etrg@novonordisk.com" },
 ]
@@ -37,7 +37,7 @@ include = ["aworkflow*"]
 profile = "black"
 
 [tool.bumpver]
-current_version = "0.1.1"
+current_version = "0.1.2"
 version_pattern = "MAJOR.MINOR.PATCH"
 commit_message = "bump version {old_version} -> {new_version}"
 tag_message = "v{new_version}"
